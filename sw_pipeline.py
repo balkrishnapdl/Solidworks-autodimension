@@ -7,14 +7,14 @@ import pythoncom
 import win32com.client
 
 
-INPUT_PARTS      = r'C:\Users\PC-09\Desktop\New folder\PairDrop_files_20260623_1531'
-OUTPUT_PARTS     = r'C:\Users\PC-09\Desktop\New folder\output_images'
-OUTPUT_DRAWINGS  = r'C:\Users\PC-09\Desktop\New folder\output_images'
-DRAWING_TEMPLATE = r'C:\Users\PC-09\Desktop\New folder\template.DRWDOT'
+INPUT_PARTS      = r'D:\New folder\PairDrop_files_20260623_1531'
+OUTPUT_PARTS     = r'D:\New folder\output_images'
+OUTPUT_DRAWINGS  = r'D:\New folder\output_images'
+DRAWING_TEMPLATE = r'D:\New folder\template.DRWDOT'
 SW_PATH          = r'D:\SOLIDWORKS\2024\SOLIDWORKS Corp\SOLIDWORKS\SLDWORKS.exe'
 
 
-TEST_STEP_FILE   = r'C:\Users\PC-09\Desktop\New folder\PairDrop_files_20260623_1531\flat_medium.step'
+TEST_STEP_FILE   = r'D:\New folder\PairDrop_files_20260623_1531\flat_complex.step'
 
 AUTO_DIMENSION_ENABLED       = True
 AUTO_HOLE_DIMENSIONS_ENABLED = True
@@ -110,8 +110,6 @@ def import_step_to_sldprt(swApp, step_file_path=None):
     print(f'STEP exists    : {os.path.isfile(step_file_path)}')
     print(f'Target SLDPRT  : {part_path}')
 
-    # --- use LoadFile4 (the import-translator pipeline) instead of
-    # OpenDoc6 (native-document pipeline) to bring in the STEP file ---
     load_errors = win32com.client.VARIANT(pythoncom.VT_BYREF | pythoncom.VT_I4, 0)
     null_prefs  = win32com.client.VARIANT(pythoncom.VT_DISPATCH, None)
 
@@ -167,7 +165,6 @@ def import_step_to_sldprt(swApp, step_file_path=None):
         )
 
     print(f'\nPart path : {part_path}')
-    print('Cell 4 OK')
 
     return part_doc, part_path
 
