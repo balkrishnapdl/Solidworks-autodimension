@@ -36,15 +36,15 @@ STATUS_FAILED    = 'Failed'
 
 # ── Theme tokens (referenced by ui.py when building the CSS block) ─────────
 THEME = {
-    'bg':            '#F4F6F8',
-    'surface':       '#FFFFFF',
-    'surface_alt':   '#FAFBFC',
-    'border':        '#E1E6EB',
+    'bg':            "#8F8F8E",
+    'surface':       "#A9FDA9",
+    'surface_alt':   "#020911",
+    'border':        "#200FBB",
     'text':          '#1B2630',
-    'text_muted':    '#67737E',
+    'text_muted':    "#00060C",
     'accent':        '#0F5DA8',
     'accent_dark':   '#0B4783',
-    'accent_soft':   '#E7F0FA',
+    'accent_soft':   "#21323F",
     'success':       '#1A8A53',
     'success_soft':  '#E6F6EE',
     'error':         '#C7402F',

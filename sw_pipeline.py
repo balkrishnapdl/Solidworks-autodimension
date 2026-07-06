@@ -124,7 +124,7 @@ def import_step_to_sldprt(swApp, step_file_path=None):
     
     if part_doc is None:
         print('  ActiveDoc is None — trying GetOpenDocumentByName...')
-        part_doc = swApp.GetOpenDocumentByName(step_file_path)
+        part_doc = swApp.GetDocuments(step_file_path)
         print(f'  GetOpenDocumentByName result: {part_doc}')
 
     if part_doc is None:
