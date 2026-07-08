@@ -28,15 +28,7 @@ SW_HORIZONTAL_ORDINATE  = 5
 SW_VERTICAL_ORDINATE    = 6
 ORDINATE_LABEL_OFFSET   = 0.025
 
-# Directory holding the externalized VBA/.bas macro source files.
-# Layout expected:
-#   sw_pipeline.py
-#   macros/
-#       autodim.bas
-#       fillet_chamfer.bas
-#       clamp_annotations.bas
-#       dim_layout.bas
-#       collision_check.bas
+
 MACRO_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'macros')
 
 SW_SAVE_ERRORS = {
@@ -50,18 +42,7 @@ SW_SAVE_ERRORS = {
 
 
 def load_macro(filename, **replacements):
-    """Load a .bas macro source file from MACRO_DIR and fill in its
-    placeholders.
 
-    Placeholders in the .bas files look like `{LOGPATH}`, `{VIEW0}`, etc.
-    Pass them as keyword args, e.g. load_macro('autodim.bas', LOGPATH=path,
-    VIEW0=name0, VIEW1=name1, VIEW2=name2).
-
-    The result is forced through ascii (errors='replace') exactly like the
-    original inline strings were, since SolidWorks' VBA editor chokes on
-    non-ascii characters (the box-drawing comment dividers in some macros
-    get replaced with '?').
-    """
     path = os.path.join(MACRO_DIR, filename)
     with open(path, 'r', encoding='utf-8') as f:
         code = f.read()
@@ -73,12 +54,7 @@ def load_macro(filename, **replacements):
 
 
 def write_macro_file(filename, **replacements):
-    """load_macro() + write the filled-in macro to a temp .swb file.
 
-    Returns (macro_path, log_path) — log_path points at the log file the
-    macro itself will write to (via its {LOGPATH} placeholder), so the
-    caller can read it back after RunMacro2.
-    """
     log_path = os.path.join(
         tempfile.gettempdir(),
         os.path.splitext(filename)[0] + '_log.txt'
@@ -98,9 +74,7 @@ def write_macro_file(filename, **replacements):
 
 
 def check_configuration():
-    """Cell 2 — Configuration (edit paths here).
-
-    Verifies the template / SW exe / test STEP file exist, and creates
+    """Verifies the template / SW exe / test STEP file exist, and creates
     the output directories.
     """
     for label, path in [('TEMPLATE', DRAWING_TEMPLATE),
@@ -127,9 +101,7 @@ def check_configuration():
 
 
 def launch_or_attach_solidworks():
-    """Cell 3 — Launch / attach SolidWorks.
-
-    Tries to attach to an already-running SolidWorks instance; if none is
+    """Tries to attach to an already-running SolidWorks instance; if none is
     running, launches it and polls until it becomes responsive.
     """
     pythoncom.CoInitialize()
@@ -241,9 +213,7 @@ def import_step_to_sldprt(swApp, step_file_path=None):
 
 
 def open_drawing_template(swApp):
-    """Cell 5 — Open drawing template.
-
-    Calls NewDocument and reads back the COM interface type, verifying
+    """Calls NewDocument and reads back the COM interface type, verifying
     it is a drawing (type 3) and probing for CreateDrawViewFromModelView3.
     """
     print(f'Template : {DRAWING_TEMPLATE}')
@@ -344,7 +314,7 @@ def create_views(swDraw, part_path):
 
 
 def wait_for_view_geometry(swDraw, view, view_name):
-    """Helper used by Cell 7. Polls a view until it reports visible edges,
+    """ Polls a view until it reports visible edges,
     or until MAX_WAIT_VIEW_SECONDS elapses."""
     deadline = time.time() + MAX_WAIT_VIEW_SECONDS
     attempt = 0
@@ -375,7 +345,6 @@ def wait_for_view_geometry(swDraw, view, view_name):
 
 
 def wait_for_all_views(swDraw, views):
-    """Cell 7 — Wait for view geometry (edges) to appear."""
     ready_views = []
     for name, v in views:
         ok = wait_for_view_geometry(swDraw, v, name)
@@ -388,7 +357,6 @@ def wait_for_all_views(swDraw, views):
 
 
 def diagnose_views(ready_views):
-    """Cell 8 — Diagnose edges & vertices per view."""
     for name, v in ready_views:
         edge_count = vertex_count = 0
         try:
@@ -413,7 +381,6 @@ def diagnose_views(ready_views):
 
 
 def _get_view_name(view_obj):
-    """Helper used by Cell 9 to resolve a view's display name."""
     for attr in ('GetName2', 'Name'):
         try:
             val = getattr(view_obj, attr)
@@ -426,14 +393,7 @@ def _get_view_name(view_obj):
 
 
 def run_autodimension_macro(swApp, swDraw, ready_views):
-    """Cell 9 — Autodimension.
-
-    Builds and runs a VBA macro (via RunMacro2), loaded from
-    macros/autodim.bas, that activates each ortho view, selects it, and
-    calls AutoDimension.
-    """
-    # ── Collect ortho view names (exclude isometric) ───────────────────────
-    ortho_views = [(n, v) for n, v in ready_views if 'sometric' not in n.lower()]
+    ortho_views = [(n, v) for n, v in ready_views if 'isometric' not in n.lower()]
     view_names = ['', '', '']
     for idx, (_, view_obj) in enumerate(ortho_views[:3]):
         actual = _get_view_name(view_obj)
@@ -470,10 +430,6 @@ def run_autodimension_macro(swApp, swDraw, ready_views):
 
 
 def run_fillet_chamfer_macro(swApp, swDraw):
-    """Cell 9 (continued) — Fillet + Chamfer annotation.
-
-    Loaded from macros/fillet_chamfer.bas.
-    """
     macro_path, log_path = write_macro_file('fillet_chamfer.bas')
 
     print(f'Macro written : {macro_path}')
@@ -494,10 +450,6 @@ def run_fillet_chamfer_macro(swApp, swDraw):
 
 
 def run_clamp_annotations_macro(swApp, swDraw):
-    """Cell 9 (continued) — Clamp annotation positions to stay on-sheet.
-
-    Loaded from macros/clamp_annotations.bas.
-    """
     macro_path, log_path = write_macro_file('clamp_annotations.bas')
 
     print(f'Macro written : {macro_path}')
@@ -518,20 +470,6 @@ def run_clamp_annotations_macro(swApp, swDraw):
 
 
 def run_dimension_layout_macro(swApp, swDraw):
-    """Cell 9 (continued) — Orientation-aware, dual-axis dimension layout.
-
-    Loaded from macros/dim_layout.bas. Classifies each dimension as
-    'vertical-type' (height dims, originally placed to the side of their
-    view) or 'horizontal-type' (width dims, originally placed above/below
-    their view), based on AutoDimension's own initial placement.
-    Horizontal-type dims are stacked above/below the view; vertical-type
-    dims are stacked left/right of the view. The dimension count on each
-    axis is split between its two sides proportional to how much room
-    (capped at ZONE_PAD) each side has.
-
-    Run BEFORE the collision checker, and re-run run_clamp_annotations_macro
-    AFTER this so nothing that lands near a sheet edge gets pushed past it.
-    """
     macro_path, log_path = write_macro_file('dim_layout.bas')
 
     print(f'Macro written : {macro_path}')
@@ -552,17 +490,6 @@ def run_dimension_layout_macro(swApp, swDraw):
 
 
 def run_collision_check_macro(swApp, swDraw):
-    """Cell 9 (continued) — Position-based dimension collision check.
-
-    Loaded from macros/collision_check.bas. Checks:
-      1) Any two dimension POSITIONS (from AutoDimension, fillet/chamfer
-         annotation, anywhere on the sheet) closer than COLLISION_RADIUS.
-      2) Any dimension position that lands inside a neighboring view's
-         outline instead of its own.
-
-    On detection, nudges the offending dimension down by a fixed step
-    (single pass — no re-check loop yet).
-    """
     macro_path, log_path = write_macro_file('collision_check.bas')
 
     print(f'Macro written : {macro_path}')
@@ -584,12 +511,6 @@ def run_collision_check_macro(swApp, swDraw):
 
 
 def save_drawing_and_export_jpeg(swApp, part_path):
-    """Cell 10 (part A) — Save .slddrw and close.
-
-    Re-fetches ActiveDoc (the macros in Cell 9 may have shifted SW focus),
-    saves the drawing as .SLDDRW, then exports a JPEG via Extension.SaveAs.
-    Returns (swDraw, jpg_path) for use by the close step.
-    """
     # Re-fetch active doc — macro in Cell 9 may have shifted SW focus
     swDraw = swApp.ActiveDoc
     assert swDraw.GetType == 3, "Active doc is not a drawing!"
@@ -643,11 +564,6 @@ def save_drawing_and_export_jpeg(swApp, part_path):
 
 
 def close_documents(swApp, swDraw, part_doc):
-    """Cell 10 (part B) — Close drawing first, then the part.
-
-    Always close drawing before part — SW will complain if you close the
-    part while a drawing that references it is still open.
-    """
     try:
         drw_title = swDraw.GetTitle
         swApp.CloseDoc(drw_title)
@@ -665,11 +581,6 @@ def close_documents(swApp, swDraw, part_doc):
 
 
 def process_single_step_file(swApp, step_file_path):
-    """Run the full pipeline (import -> views -> dimension -> export JPG)
-    for a single STEP file, using an already-running SolidWorks instance.
-
-    Returns the path to the generated JPG drawing.
-    """
     part_doc, part_path = import_step_to_sldprt(swApp, step_file_path)
     swDraw = open_drawing_template(swApp)
     views = create_views(swDraw, part_path)
@@ -693,7 +604,6 @@ def process_single_step_file(swApp, step_file_path):
 
 
 def main():
-    """Original single-file entry point, preserved for standalone/manual use."""
     print('Imports OK')
     check_configuration()
     swApp = launch_or_attach_solidworks()
